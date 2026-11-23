@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meteostanica</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14202b;--mut:#5d6b78;--bg:#eef3f6;--card:#fff;--line:#d9e2e8}
+body{--h1:#ffe08a;--h2:#ffb15c;--fg:#2b1d0a}
+body[data-k=cloud]{--h1:#cfd8e0;--h2:#9aabba;--fg:#1b2733}
+body[data-k=rain]{--h1:#6b879e;--h2:#2f4559;--fg:#fff}
+body[data-k=snow]{--h1:#e6f0f8;--h2:#a7c3d9;--fg:#14202b}
+body[data-k=storm]{--h1:#51567a;--h2:#1c1f36;--fg:#fff}
+body[data-k=night]{--h1:#24365f;--h2:#0d1527;--fg:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Outfit,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+.ic{fill:none;stroke:currentColor;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hero{background:linear-gradient(160deg,var(--h1),var(--h2));color:var(--fg);padding:20px 20px 36px}
+.wrap{max-width:1000px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-weight:500;flex-wrap:wrap}
+.st{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:300}
+.st i{width:10px;height:10px;border-radius:50%;background:#2fbf71;display:inline-block}
+.st.off i{background:#f0a020}
+.now{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;margin-top:24px}
+#hico{display:flex}
+#htemp{font-size:clamp(4.5rem,15vw,8rem);font-weight:700;line-height:.95;letter-spacing:-.03em}
+#hcond{font-size:1.4rem;font-weight:300;margin-top:6px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:28px}
+.tile{background:rgba(255,255,255,.26);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.tile b{font-size:1.7rem;font-weight:700;display:block;line-height:1.1}
+.tile span{font-size:.9rem;font-weight:300}
+main{max-width:1000px;margin:0 auto;padding:28px 20px 40px}
+h2{font-size:1.35rem;margin:0 0 14px;font-weight:700}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-bottom:36px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.day h3{margin:0;font-size:1rem;font-weight:700;text-transform:capitalize}
+.day small{color:var(--mut)}
+.day .big{display:flex;align-items:center;gap:10px;margin:10px 0}
+.day .big div{font-size:1.5rem;font-weight:700}
+.day .big em{display:block;font-style:normal;font-size:.85rem;font-weight:300;color:var(--mut)}
+.day ul{list-style:none;margin:0;padding:8px 0 0;border-top:1px solid var(--line);font-size:.9rem;color:var(--mut)}
+.day li{display:flex;justify-content:space-between}
+.k-sun{color:#e88a14}.k-cloud{color:#6f8296}.k-rain{color:#2f6db0}.k-night{color:#4a5a9a}.k-snow{color:#5b8fb9}.k-storm{color:#5a4d9a}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.bar h2{margin:0}
+.seg button{font:inherit;border:1px solid var(--line);background:var(--card);padding:6px 14px;cursor:pointer;color:var(--ink)}
+.seg button:first-child{border-radius:10px 0 0 10px}.seg button:last-child{border-radius:0 10px 10px 0;border-left:0}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+button:focus-visible{outline:3px solid #2d7dd2;outline-offset:2px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 8px}
+.cc h3{margin:0 0 4px;font-size:1rem;display:flex;gap:8px;align-items:center}
+.ch{position:relative}
+.ch svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.ch text{font-size:11px;fill:var(--mut);font-family:inherit}
+.ch .g line{stroke:var(--line)}
+.cur{stroke:var(--mut);stroke-dasharray:3 3}
+.tip{position:absolute;top:0;background:var(--ink);color:#fff;padding:6px 10px;border-radius:8px;font-size:.85rem;pointer-events:none;white-space:nowrap;transform:translateX(-50%)}
+.tip svg{display:inline-block;vertical-align:middle;width:22px;height:22px;margin-right:4px}
+.msg{padding:12px 16px;border-radius:12px;margin-bottom:20px;background:#fff4d6;color:#5b4300}
+.mut{color:var(--mut)}
+footer{max-width:1000px;margin:0 auto;padding:0 20px 30px;color:var(--mut);font-size:.85rem}
+footer a{color:inherit}
+@media(max-width:560px){.now{grid-template-columns:1fr}.charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-k="sun">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-sun" viewBox="0 0 64 64"><circle cx="32" cy="32" r="10"/><path d="M32 8v8M32 48v8M8 32h8M48 32h8M15 15l6 6M43 43l6 6M15 49l6-6M43 21l6-6"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 64 64"><path d="M20 48h26a10 10 0 0 0 1-20 15 15 0 0 0-29 3 9 9 0 0 0 2 17z"/></symbol>
+<symbol id="i-partly" viewBox="0 0 64 64"><circle cx="20" cy="20" r="7"/><path d="M20 6v3M6 20h3M10 10l2 2M30 10l-2 2M10 30l2-2"/><path d="M28 54h20a9 9 0 0 0 1-18 12 12 0 0 0-23 2 8 8 0 0 0 2 16z"/></symbol>
+<symbol id="i-partlynight" viewBox="0 0 64 64"><path d="M26 8a10 10 0 1 0 12 14 8 8 0 0 1-12-14z"/><path d="M28 54h20a9 9 0 0 0 1-18 12 12 0 0 0-23 2 8 8 0 0 0 2 16z"/></symbol>
+<symbol id="i-rain" viewBox="0 0 64 64"><path d="M20 40h26a9 9 0 0 0 1-18 14 14 0 0 0-27 3 8 8 0 0 0 0 15z"/><path d="M22 48l-3 8M32 48l-3 8M42 48l-3 8"/></symbol>
+<symbol id="i-snow" viewBox="0 0 64 64"><path d="M20 40h26a9 9 0 0 0 1-18 14 14 0 0 0-27 3 8 8 0 0 0 0 15z"/><path d="M22 49h.01M32 49h.01M42 49h.01M27 57h.01M37 57h.01"/></symbol>
+<symbol id="i-storm" viewBox="0 0 64 64"><path d="M20 40h26a9 9 0 0 0 1-18 14 14 0 0 0-27 3 8 8 0 0 0 0 15z"/><path d="M34 42l-6 9h8l-5 9"/></symbol>
+<symbol id="i-fog" viewBox="0 0 64 64"><path d="M20 38h26a9 9 0 0 0 1-18 14 14 0 0 0-27 3 8 8 0 0 0 0 15z"/><path d="M14 47h36M20 55h30"/></symbol>
+<symbol id="i-moon" viewBox="0 0 64 64"><path d="M46 40A18 18 0 0 1 26 12a18 18 0 1 0 20 28z"/></symbol>
+<symbol id="i-temp" viewBox="0 0 64 64"><path d="M27 14a6 6 0 0 1 12 0v24a11 11 0 1 1-12 0z"/></symbol>
+<symbol id="i-drop" viewBox="0 0 64 64"><path d="M32 8C24 20 16 28 16 38a16 16 0 0 0 32 0C48 28 40 20 32 8z"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 64 64"><path d="M10 46a22 22 0 1 1 44 0"/><path d="M32 46l10-14"/></symbol>
+</svg>
+
+<header class="hero">
+ <div class="wrap">
+  <div class="top"><span>Meteostanica</span><span class="st" id="st"><i></i><span id="stt">Načítavam…</span></span></div>
+  <div class="now">
+   <div id="hico"></div>
+   <div><div id="htemp">--</div><div id="hcond"></div></div>
+  </div>
+  <div class="tiles" id="tiles"></div>
+ </div>
+</header>
+
+<main>
+ <div class="msg" id="err" hidden>Údaje sa nepodarilo načítať. Skontroluj pripojenie na internet, CHANNEL_ID a či je kanál na ThingSpeak verejný.</div>
+ <h2>Posledných 5 dní</h2>
+ <div class="days" id="days"></div>
+ <div class="bar">
+  <h2>Priebeh hodnôt</h2>
+  <div class="seg"><button data-r="24" aria-pressed="true">24 hodín</button><button data-r="120" aria-pressed="false">5 dní</button></div>
+ </div>
+ <div class="charts" id="charts"></div>
+</main>
+
+<footer>Merania: vlastná stanica (ThingSpeak). Ikona a popis počasia: <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a></footer>
+
+<script>
+const CHANNEL_ID = "3593993";   // číslo kanála z ThingSpeak
+const READ_KEY   = "";          // Read API Key (len ak je kanál súkromný)
+const LAT = 48.72, LON = 21.26; // poloha stanice (Košice), rovnaká ako v kóde displeja
+const F = {temp:"field1", hum:"field2", pres:"field3"};
+
+const $ = s => document.querySelector(s);
+const M = {
+ temp:{n:"Teplota",u:"°C",c:"#e4572e",d:1,i:"temp"},
+ hum:{n:"Vlhkosť",u:"%",c:"#2d7dd2",d:0,i:"drop"},
+ pres:{n:"Tlak",u:"hPa",c:"#7b5ea7",d:0,i:"gauge"}
+};
+let data = [], wx = null, wxT = 0, range = "24";
+const ic = (n, s=48) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 64 64"><use href="#i-${n}"/></svg>`;
+const isNight = d => d.getHours() < 6 || d.getHours() >= 20;
+
+// WMO kód počasia z Open-Meteo, rovnaké kategórie ako ikony na displeji
+function byCode(c, day){
+ const n = !day;
+ if (c <= 1) return n ? {k:"night", l:"Jasná noc", i:"moon"} : {k:"sun", l:c ? "Prevažne jasno" : "Jasno", i:"sun"};
+ if (c === 2) return n ? {k:"night", l:"Polojasno", i:"partlynight"} : {k:"sun", l:"Polojasno", i:"partly"};
+ if (c === 3) return {k:"cloud", l:"Zamračené", i:"cloud"};
+ if (c === 45 || c === 48) return {k:"cloud", l:"Hmla", i:"fog"};
+ if (c >= 51 && c <= 57) return {k:"rain", l:"Mrholenie", i:"rain"};
+ if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return {k:"rain", l:c >= 80 ? "Prehánky" : "Dážď", i:"rain"};
+ if ((c >= 71 && c <= 77) || c === 85 || c === 86) return {k:"snow", l:"Sneženie", i:"snow"};
+ if (c >= 95) return {k:"storm", l:"Búrka", i:"storm"};
+ return {k:"cloud", l:"Zamračené", i:"cloud"};
+}
+
+// záloha, keď Open-Meteo nie je dostupné: odhad z vlhkosti a tlaku
+function guess(o, night){
+ if (o.hum >= 88 && o.pres < 1008) return {k:"rain", l:"Pravdepodobne dážď", i:"rain"};
+ if (o.hum >= 80 || o.pres < 1000) return {k:"cloud", l:"Zamračené", i:"cloud"};
+ if (o.hum >= 62) return night ? {k:"night", l:"Polooblačno", i:"partlynight"} : {k:"sun", l:"Polooblačno", i:"partly"};
+ return night ? {k:"night", l:"Jasná noc", i:"moon"} : {k:"sun", l:"Slnečno", i:"sun"};
+}
+
+function condAt(ts, o){
+ const h = wx && wx.h.get(Math.floor(ts / 36e5) * 36e5);
+ return h ? byCode(h.code, h.day) : guess(o, isNight(new Date(ts)));
+}
+
+async function loadWx(){
+ try{
+  const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=weather_code,is_day&hourly=weather_code,is_day&daily=weather_code&past_days=5&forecast_days=1&timeformat=unixtime&timezone=Europe%2FBratislava`);
+  if (!r.ok) throw 0;
+  const j = await r.json();
+  wx = {
+   cur: {code:j.current.weather_code, day:j.current.is_day === 1},
+   h: new Map(j.hourly.time.map((t,i) => [t*1000, {code:j.hourly.weather_code[i], day:j.hourly.is_day[i] === 1}])),
+   d: new Map(j.daily.time.map((t,i) => [new Date(t*1000).toDateString(), j.daily.weather_code[i]]))
+  };
+ }catch(e){}
+}
+
+async function load(){
+ try{
+  if (!CHANNEL_ID) throw 0;
+  const needWx = Date.now() - wxT > 6e5;   // počasie stačí obnoviť raz za 10 minút
+  const [r] = await Promise.all([
+   fetch(`https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?days=5&results=8000` + (READ_KEY ? `&api_key=${READ_KEY}` : "")),
+   needWx ? loadWx() : 0
+  ]);
+  if (needWx) wxT = Date.now();
+  if (!r.ok) throw 0;
+  const n = v => v == null ? NaN : +v;
+  data = (await r.json()).feeds.map(f => ({t:new Date(f.created_at), temp:n(f[F.temp]), hum:n(f[F.hum]), pres:n(f[F.pres])}))
+   .filter(o => [o.temp,o.hum,o.pres].every(Number.isFinite));
+  if (!data.length) throw 1;
+  $("#err").hidden = true;
+  render();
+ }catch(e){ $("#err").hidden = false; }
+}
+
+function hero(){
+ const o = data[data.length-1], c = wx ? byCode(wx.cur.code, wx.cur.day) : guess(o, isNight(o.t));
+ document.body.dataset.k = c.k;
+ $("#hico").innerHTML = ic(c.i, 130);
+ $("#htemp").textContent = o.temp.toFixed(1) + "°";
+ $("#hcond").textContent = c.l;
+ $("#tiles").innerHTML = ["pres","hum"].map(k =>
+  `<div class="tile">${ic(M[k].i,36)}<div><b>${o[k].toFixed(M[k].d)} ${M[k].u}</b><span>${M[k].n}</span></div></div>`).join("");
+ const age = (Date.now() - o.t) / 6e4, st = $("#st");
+ st.className = "st" + (age > 10 ? " off" : "");
+ $("#stt").textContent = age > 10
+  ? "Stanica neposiela údaje, posledné o " + o.t.toLocaleString("sk-SK",{weekday:"short",hour:"2-digit",minute:"2-digit"})
+  : "Naživo, aktualizované " + o.t.toLocaleTimeString("sk-SK",{hour:"2-digit",minute:"2-digit"});
+}
+
+function days(){
+ const g = {};
+ data.forEach(o => (g[o.t.toDateString()] ??= []).push(o));
+ $("#days").innerHTML = Object.values(g).slice(-5).map(a => {
+  const av = k => a.reduce((s,o) => s + o[k], 0) / a.length;
+  const t = a.map(o => o.temp);
+  const d = a[0].t, code = wx && wx.d.get(d.toDateString());
+  const c = code != null ? byCode(code, true) : guess({hum:av("hum"), pres:av("pres")}, false);
+  const today = d.toDateString() === new Date().toDateString();
+  return `<div class="day"><h3>${today ? "Dnes" : d.toLocaleDateString("sk-SK",{weekday:"long"})}</h3>
+   <small>${d.toLocaleDateString("sk-SK",{day:"numeric",month:"numeric"})}.</small>
+   <div class="big k-${c.k === "night" ? "sun" : c.k}">${ic(c.i,52)}<div style="color:var(--ink)">${Math.max(...t).toFixed(0)}° <small style="font-weight:300">/ ${Math.min(...t).toFixed(0)}°</small><em>${c.l}</em></div></div>
+   <ul><li><span>Tlak</span><span>${av("pres").toFixed(0)} hPa</span></li>
+   <li><span>Vlhkosť</span><span>${av("hum").toFixed(0)} %</span></li></ul></div>`;
+ }).join("");
+}
+
+function series(k){
+ const now = Date.now(), span = range === "24" ? 864e5 : 5*864e5, step = range === "24" ? 9e5 : 36e5, m = new Map();
+ data.forEach(o => {
+  if (now - o.t > span) return;
+  const b = Math.floor(o.t / step) * step, e = m.get(b) || {s:0, n:0};
+  e.s += o[k]; e.n++; m.set(b, e);
+ });
+ return [...m].map(([b,e]) => ({t:b, v:e.s/e.n}));
+}
+
+function chart(k){
+ const s = series(k), m = M[k], el = $("#c-" + k), W = 600, H = 210, L = 44, R = 10, T = 10, B = 24;
+ if (s.length < 2){ el.innerHTML = '<p class="mut">Zatiaľ je málo údajov.</p>'; return; }
+ let lo = Math.min(...s.map(p => p.v)), hi = Math.max(...s.map(p => p.v));
+ if (hi - lo < 1){ lo -= .5; hi += .5; }
+ const pad = (hi - lo) * .1; lo -= pad; hi += pad;
+ const t0 = s[0].t, t1 = s[s.length-1].t;
+ const X = t => L + (t - t0) / (t1 - t0) * (W - L - R), Y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+ let grid = "";
+ for (let i = 0; i <= 3; i++){ const v = lo + (hi - lo) * i / 3;
+  grid += `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v.toFixed(m.d)}</text>`; }
+ const d = new Date(t0), ticks = [];
+ if (range === "24"){ d.setMinutes(0,0,0); do d.setHours(d.getHours()+1); while (d.getHours() % 4); while (d < t1){ ticks.push(+d); d.setHours(d.getHours()+4); } }
+ else { d.setHours(24,0,0,0); while (d < t1){ ticks.push(+d); d.setDate(d.getDate()+1); } }
+ const xl = ticks.map(t => `<text x="${X(t)}" y="${H-6}" text-anchor="middle">${range === "24" ? new Date(t).getHours() + ":00" : new Date(t).toLocaleDateString("sk-SK",{weekday:"short"})}</text>`).join("");
+ const path = s.map((p,i) => (i ? "L" : "M") + X(p.t).toFixed(1) + " " + Y(p.v).toFixed(1)).join("");
+ el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><g class="g">${grid}</g>${xl}
+  <path d="${path}" fill="none" stroke="${m.c}" stroke-width="2.5" stroke-linejoin="round"/>
+  <line class="cur" y1="${T}" y2="${H-B}" style="display:none"/><circle r="5" fill="${m.c}" stroke="#fff" stroke-width="2" style="display:none"/></svg><div class="tip" hidden></div>`;
+ const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), cur = svg.querySelector(".cur"), dot = svg.querySelector("circle");
+ svg.onpointermove = e => {
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W;
+  let b = s[0]; for (const p of s) if (Math.abs(X(p.t) - x) < Math.abs(X(b.t) - x)) b = p;
+  const px = X(b.t), o = data.find(o => o.t >= b.t) || data[data.length-1], c = condAt(b.t, o);
+  cur.setAttribute("x1", px); cur.setAttribute("x2", px); dot.setAttribute("cx", px); dot.setAttribute("cy", Y(b.v));
+  cur.style.display = dot.style.display = "";
+  tip.hidden = false;
+  tip.innerHTML = `${ic(c.i,22)}<b>${b.v.toFixed(m.d)} ${m.u}</b><br>${new Date(b.t).toLocaleString("sk-SK",{weekday:"short",hour:"2-digit",minute:"2-digit"})}`;
+  tip.style.left = Math.min(Math.max(px / W * 100, 14), 86) + "%";
+ };
+ svg.onpointerleave = () => { tip.hidden = true; cur.style.display = dot.style.display = "none"; };
+}
+
+function render(){ hero(); days(); Object.keys(M).forEach(chart); }
+
+$("#charts").innerHTML = Object.keys(M).map(k =>
+ `<div class="cc"><h3 style="color:${M[k].c}">${ic(M[k].i,22)}<span style="color:var(--ink)">${M[k].n} (${M[k].u})</span></h3><div class="ch" id="c-${k}"></div></div>`).join("");
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+ range = b.dataset.r;
+ document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+ if (data.length) Object.keys(M).forEach(chart);
+});
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
